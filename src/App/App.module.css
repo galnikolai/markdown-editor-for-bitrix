@@ -1,0 +1,346 @@
+@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap");
+
+:root {
+  --font-family: "Golos Text", sans-serif;
+  --second-family: "Inter", sans-serif;
+  --third-family: "Roboto", sans-serif;
+  --font3: "Golos", sans-serif;
+  --font4: "TT Travels", sans-serif;
+  --font5: "Helvetica", sans-serif;
+
+  --bg-primary: #faf8f4;
+  --bg-secondary: #efede5;
+  --bg-border: #d5d8ce;
+  --bg-yellow: #c3ad26;
+  --bg-dark: #172c15;
+  --bg-blue: #909fd6;
+  --bg-violet: #bc9da5;
+  --bg-orange: #e27363;
+
+  --tx-primary: #172c15;
+  --tx-secondary: #9fa99e;
+  --tx-white: #faf8f4;
+  --tx-yellow: #c3ad26;
+  --tx-orange: #e27363;
+
+  --gr-yellow: #d4d067;
+  --gr-blue: #7c8ac3;
+  --gr-violet: #896284;
+  --gr-orange: #c96b52;
+
+  --error: #d91528;
+  --state: #637961;
+
+  --dark-yellow: rgba(212, 208, 103, 0.2);
+
+  --desktop-max-width: 1920px;
+  --desktop-news-max-width: 878px;
+  --tablet-max-width: 1280px;
+  --mobile-max-width: 768px;
+
+  --desktop-container-x-padding: 3.625rem;
+  --tablet-container-x-padding: 2.5rem;
+  --mobile-container-x-padding: 1rem;
+}
+
+html,
+body {
+  max-width: 100vw;
+  font-size: 16px;
+}
+
+
+.prose .second {
+  white-space: pre-line !important;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1 {
+  font-weight: 700;
+  font-size: 5.375rem;
+  line-height: 100%;
+  text-transform: uppercase;
+  font-family: var(--font-family);
+}
+
+h2 {
+  font-family: var(--font-family);
+  font-weight: 800;
+  font-size: 3.25rem;
+  line-height: 92%;
+}
+
+h3 {
+  font-weight: 800;
+  font-size: 2.125rem;
+  line-height: 100%;
+  font-family: var(--font-family);
+}
+
+h4 {
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 120%;
+  font-family: var(--font-family);
+}
+
+.large {
+  font-weight: 500;
+  font-size: 2.125rem;
+  line-height: 106%;
+  letter-spacing: -0.06em;
+}
+
+.medium {
+  font-weight: 500;
+  font-size: 2.125rem;
+  line-height: 106%;
+  letter-spacing: -0.06em;
+}
+
+.small-strong {
+  font-weight: 500;
+  font-size: 2.125rem;
+  line-height: 106%;
+  letter-spacing: -0.06em;
+}
+
+.small {
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 137%;
+}
+
+.desk-bold {
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 111%;
+}
+
+.drawer-desk {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 150%;
+}
+
+.desk-large {
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 129%;
+}
+
+.desk-medium {
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 117%;
+}
+
+.desktop {
+  display: flex;
+}
+
+.tablet {
+  display: none;
+}
+
+.desktop.tablet {
+  display: flex;
+}
+
+.tablet.mobile {
+  display: none;
+}
+
+.mobile {
+  display: none;
+}
+
+@media (max-width: 1280px) {
+  .large {
+    font-size: 1.5rem;
+  }
+  h1 {
+    font-size: 4rem;
+  }
+  h2 {
+    font-size: 2.5rem;
+    line-height: 108%;
+  }
+  h4 {
+    font-size: 1.125rem;
+  }
+
+  .desktop {
+    display: none;
+  }
+
+  .tablet.mobile {
+    display: flex;
+  }
+
+  .desktop.tablet {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  [class*="container"]:not([class*="ymaps"]),
+  [class*="container"]:not([class*="ymaps"])[class*="detail-news"] {
+    padding: 0 var(--mobile-container-x-padding);
+  }
+
+  h1 {
+    font-size: 2.125rem;
+  }
+
+  h2 {
+    font-size: 1.625rem;
+  }
+
+  .small {
+    font-size: 0.9375rem;
+  }
+
+  .large {
+    font-size: 1.25rem;
+  }
+
+  .desk-bold {
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 129%;
+  }
+
+  .desktop.tablet {
+    display: none;
+  }
+
+  .tablet {
+    display: none;
+  }
+
+  .mobile {
+    display: flex;
+  }
+}
+
+button,
+a {
+  cursor: pointer;
+}
+
+.parent {
+  padding: 20px 40px 40px;
+  flex-direction: column;
+  align-items: start;
+  gap: 10px;
+  height: 100%;
+
+  color: var(--tx-primary);
+  background: var(--bg-primary);
+  font-family: var(--font-family);
+}
+
+.parent * {
+  box-sizing: border-box;
+}
+
+.texterea {
+  width: 50%;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.editor {
+  padding: 0 0 20px;
+  border-radius: 5px;
+  width: 100%;
+  min-height: 30vh;
+  border: 1px solid black;
+  background: white;
+  box-sizing: border-box;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+
+.red {
+  color: #e27363;
+}
+
+.pg_editor_cont {
+  max-width: 100%;
+}
+.mdx-editor-content {
+  min-height: 500px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+/* Стили для перетаскивания в редакторе */
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(66, 153, 225, 0.1);
+  border: 2px dashed #4299e1;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1000;
+}
+/* Стили для перетаскивания файлов */
+.drag-drop-zone {
+  transition: all 0.3s ease;
+}
+
+.drag-drop-zone.dragging {
+  border-color: #4299e1;
+  background-color: #ebf8ff;
+}
+
+/* Стили для превью изображения */
+.image-preview {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+/* Прогресс-бар */
+.progress-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #4299e1;
+  transition: width 0.3s ease;
+}
+
+/* Стили для кнопок */
+.upload-button {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.upload-button input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
