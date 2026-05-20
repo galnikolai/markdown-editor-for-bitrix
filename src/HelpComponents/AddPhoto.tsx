@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, DragEvent, ChangeEvent } from "react";
 import { IImgWithCopyRight } from "../MDXComponents/ImageWithCopyRight";
+import { sanitizeQuotesForMdx } from "../consts/functions";
 
 interface IAddPhoto {
     updatePhoto: (photo: IImgWithCopyRight) => void;
@@ -210,13 +211,18 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
             return;
         }
 
+        const altValue = sanitizeQuotesForMdx(
+            imgAlt.trim() || `Изображение ${new Date().toLocaleDateString()}`
+        );
         const newPhoto: IImgWithCopyRight = {
             id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             img: {
                 src: imgSrc,
-                alt: imgAlt.trim() || `Изображение ${new Date().toLocaleDateString()}`
+                alt: altValue,
             },
-            copyright: copyright.trim() || undefined,
+            copyright: copyright.trim()
+                ? sanitizeQuotesForMdx(copyright.trim())
+                : undefined,
             copyRightColor: copyRightColor !== "#000000" ? copyRightColor : undefined
         };
 
@@ -515,7 +521,9 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
                         id="imgAlt"
                         type="text"
                         value={imgAlt}
-                        onChange={(e) => setImgAlt(e.target.value)}
+                        onChange={(e) =>
+                            setImgAlt(sanitizeQuotesForMdx(e.target.value))
+                        }
                         placeholder="Описание изображения для доступности"
                         style={{
                             width: "100%",
@@ -545,7 +553,9 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
                         id="copyright"
                         type="text"
                         value={copyright}
-                        onChange={(e) => setCopyright(e.target.value)}
+                        onChange={(e) =>
+                            setCopyright(sanitizeQuotesForMdx(e.target.value))
+                        }
                         placeholder="Автор изображения"
                         style={{
                             width: "100%",

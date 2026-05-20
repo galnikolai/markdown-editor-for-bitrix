@@ -1,3 +1,21 @@
+import type { IImgWithCopyRight } from "../MDXComponents/ImageWithCopyRight";
+
+export const sanitizeQuotesForMdx = (value: string): string =>
+  value.replace(/"/g, "'");
+
+export const sanitizeImgWithCopyRight = (
+  item: IImgWithCopyRight
+): IImgWithCopyRight => ({
+  ...item,
+  img: {
+    ...item.img,
+    alt: item.img.alt ? sanitizeQuotesForMdx(item.img.alt) : item.img.alt,
+  },
+  copyright: item.copyright
+    ? sanitizeQuotesForMdx(item.copyright)
+    : item.copyright,
+});
+
 export function generateRandomId(length: number = 10): string {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';

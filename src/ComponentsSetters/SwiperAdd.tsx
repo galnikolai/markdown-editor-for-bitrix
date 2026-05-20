@@ -3,6 +3,7 @@ import JsxComponentSetter from "./JsxComponentSetter/JsxComponentSetter";
 import { IImgWithCopyRight } from "../MDXComponents/ImageWithCopyRight";
 import ImgsSwiper from "../MDXComponents/ImgsSwiper";
 import { DopImgSrcGlobalContext } from "../contexts/DopImgSrcProvider";
+import { sanitizeQuotesForMdx } from "../consts/functions";
 
 const SwiperAdd = ({ title }: { title: string }) => {
     const { dopSrcGlobal } = useContext(DopImgSrcGlobalContext);
@@ -25,7 +26,7 @@ const SwiperAdd = ({ title }: { title: string }) => {
         // Формируем строку объектов для атрибута
         const objectsValue = images.length > 0
             ? `[${images.map(img =>
-                `{ id: "${img.id}", img: { src: "${img.img.src}", alt: "${img.img.alt || ''}" }, copyright: "${img.copyright || ''}", copyRightColor: "${img.copyRightColor || ''}" }`
+                `{ id: "${img.id}", img: { src: "${img.img.src}", alt: "${sanitizeQuotesForMdx(img.img.alt || '')}" }, copyright: "${sanitizeQuotesForMdx(img.copyright || '')}", copyRightColor: "${img.copyRightColor || ''}" }`
             ).join(', ')}]`
             : '[]';
 

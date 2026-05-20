@@ -1,5 +1,9 @@
 import { memo, useState } from "react";
-import { generateRandomId } from "../consts/functions";
+import {
+  generateRandomId,
+  sanitizeImgWithCopyRight,
+  sanitizeQuotesForMdx,
+} from "../consts/functions";
 
 export interface IImgWithCopyRight {
   img: {
@@ -36,20 +40,25 @@ const ImageWithCopyRight = ({
   const handleChange =
     (field: keyof typeof formData) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      const value =
+        field === "imgAlt" || field === "copyright"
+          ? sanitizeQuotesForMdx(raw)
+          : raw;
       setFormData((prev) => ({
         ...prev,
-        [field]: e.target.value,
+        [field]: value,
       }));
     };
 
   const handleAddPhoto = () => {
-    const newImg: IImgWithCopyRight = {
+    const newImg: IImgWithCopyRight = sanitizeImgWithCopyRight({
       img: { src: formData.imgSrc, alt: formData.imgAlt || "Картинка" },
       copyright: formData.copyright,
       copyRightColor:
         formData.copyRightColor === "" ? "white" : formData.copyRightColor,
       id: generateRandomId(),
-    };
+    });
     if (changeAttr) changeAttr(newImg);
   };
   return (

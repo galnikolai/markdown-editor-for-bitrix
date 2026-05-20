@@ -3,6 +3,10 @@ import { useMdastNodeUpdater } from "@mdxeditor/editor";
 import { MdastJsx } from "@mdxeditor/editor";
 import ImgsSwiper from "../ImgsSwiper";
 import { IImgWithCopyRight } from "../ImageWithCopyRight";
+import {
+    sanitizeImgWithCopyRight,
+    sanitizeQuotesForMdx,
+} from "../../consts/functions";
 import ButtonForDelete from "../../HelpComponents/ButtonForDelete";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getNearestNodeFromDOMNode } from "lexical";
@@ -43,7 +47,11 @@ export const EditorSwiper = ({ mdastNode }: EditorSwiperProps) => {
 
                         const parsedObjects = JSON.parse(fixedJsonString);
                         if (Array.isArray(parsedObjects)) {
-                            setObjects(parsedObjects);
+                            setObjects(
+                                parsedObjects.map((item: IImgWithCopyRight) =>
+                                    sanitizeImgWithCopyRight(item)
+                                )
+                            );
                         }
                     }
                 }
@@ -66,10 +74,13 @@ export const EditorSwiper = ({ mdastNode }: EditorSwiperProps) => {
                         (item) =>
                             `{ id: "${item.id}", img: { src: "${item.img.src}", alt: "${
                                 item.img.alt
-                            }" }, copyright: "${item.copyright?.replace(
-                                /"/g,
-                                "'"
-                            )}", copyRightColor: "${item.copyRightColor}" }`
+                                    ? sanitizeQuotesForMdx(item.img.alt)
+                                    : ""
+                            }" }, copyright: "${
+                                item.copyright
+                                    ? sanitizeQuotesForMdx(item.copyright)
+                                    : ""
+                            }", copyRightColor: "${item.copyRightColor}" }`
                     )
                     .join(", ")}]`,
             };

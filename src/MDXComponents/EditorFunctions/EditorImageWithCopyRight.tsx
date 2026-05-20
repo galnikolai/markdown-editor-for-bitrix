@@ -9,6 +9,10 @@ import { DopImgSrcGlobalContext } from "../../contexts/DopImgSrcProvider";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getNearestNodeFromDOMNode } from "lexical";
 import ButtonForDelete from "../../HelpComponents/ButtonForDelete";
+import {
+  sanitizeImgWithCopyRight,
+  sanitizeQuotesForMdx,
+} from "../../consts/functions";
 
 type CustomMdxJsxAttribute = MdxJsxAttribute | MdxJsxExpressionAttribute;
 
@@ -30,9 +34,10 @@ export const EditorImageWithCopyRight = ({
 
   const updatePhoto = useCallback(
     async (value: IImgWithCopyRight) => {
-      setAttributes(value);
+      const sanitized = sanitizeImgWithCopyRight(value);
+      setAttributes(sanitized);
 
-      const nodes: CustomMdxJsxAttribute[] = Object.entries(value).map(
+      const nodes: CustomMdxJsxAttribute[] = Object.entries(sanitized).map(
         ([key, val]) => {
           return {
             type: "mdxJsxAttribute",
@@ -70,12 +75,20 @@ export const EditorImageWithCopyRight = ({
             attr.value?.type === "mdxJsxAttributeValueExpression"
           ) {
             try {
-              initialAttributes.img = JSON.parse(attr.value.value);
+              const parsedImg = JSON.parse(attr.value.value);
+              initialAttributes.img = {
+                ...parsedImg,
+                alt: parsedImg.alt
+                  ? sanitizeQuotesForMdx(parsedImg.alt)
+                  : parsedImg.alt,
+              };
             } catch (e) {
               console.error("Error parsing img attribute:", e);
             }
           } else if (attr.name === "copyright") {
-            initialAttributes.copyright = String(attr.value).replace("\"", "'");
+            initialAttributes.copyright = sanitizeQuotesForMdx(
+              String(attr.value)
+            );
           } else if (attr.name === "id") {
             initialAttributes.id = String(attr.value);
           }
