@@ -3,7 +3,7 @@ import JsxComponentSetter from "./JsxComponentSetter/JsxComponentSetter";
 import { IImgWithCopyRight } from "../MDXComponents/ImageWithCopyRight";
 import ImgsSwiper from "../MDXComponents/ImgsSwiper";
 import { DopImgSrcGlobalContext } from "../contexts/DopImgSrcProvider";
-import { sanitizeQuotesForMdx } from "../consts/functions";
+import { serializeSwiperObjects } from "../consts/functions";
 
 const SwiperAdd = ({ title }: { title: string }) => {
     const { dopSrcGlobal } = useContext(DopImgSrcGlobalContext);
@@ -17,6 +17,10 @@ const SwiperAdd = ({ title }: { title: string }) => {
         setImages(prev => prev.filter(img => img.id !== imageToDelete.id));
     }, []);
 
+    const handleUpdateImage = useCallback((image: IImgWithCopyRight) => {
+        setImages(prev => prev.map(img => img.id === image.id ? image : img));
+    }, []);
+
     const handleReorderImages = useCallback((reorderedImages: IImgWithCopyRight[]) => {
         setImages(reorderedImages);
     }, []);
@@ -24,11 +28,8 @@ const SwiperAdd = ({ title }: { title: string }) => {
     // Функция для получения динамических пропсов
     const getDynamicProps = useCallback(() => {
         // Формируем строку объектов для атрибута
-        const objectsValue = images.length > 0
-            ? `[${images.map(img =>
-                `{ id: "${img.id}", img: { src: "${img.img.src}", alt: "${sanitizeQuotesForMdx(img.img.alt || '')}" }, copyright: "${sanitizeQuotesForMdx(img.copyright || '')}", copyRightColor: "${img.copyRightColor || ''}" }`
-            ).join(', ')}]`
-            : '[]';
+        const objectsValue =
+            images.length > 0 ? serializeSwiperObjects(images) : "[]";
 
         return {
             objects: objectsValue
@@ -118,6 +119,7 @@ const SwiperAdd = ({ title }: { title: string }) => {
             <ImgsSwiper
                 onAdd={handleAddImage}
                 onDelete={handleDeleteImage}
+                onUpdate={handleUpdateImage}
                 onReorder={handleReorderImages}
                 objects={images}
                 dopSrc={dopSrcGlobal}
