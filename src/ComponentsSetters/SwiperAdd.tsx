@@ -3,7 +3,7 @@ import JsxComponentSetter from "./JsxComponentSetter/JsxComponentSetter";
 import { IImgWithCopyRight } from "../MDXComponents/ImageWithCopyRight";
 import ImgsSwiper from "../MDXComponents/ImgsSwiper";
 import { DopImgSrcGlobalContext } from "../contexts/DopImgSrcProvider";
-import { sanitizeQuotesForMdx } from "../consts/functions";
+import { serializeSwiperObjects } from "../consts/functions";
 
 const SwiperAdd = ({ title }: { title: string }) => {
     const { dopSrcGlobal } = useContext(DopImgSrcGlobalContext);
@@ -24,11 +24,8 @@ const SwiperAdd = ({ title }: { title: string }) => {
     // Функция для получения динамических пропсов
     const getDynamicProps = useCallback(() => {
         // Формируем строку объектов для атрибута
-        const objectsValue = images.length > 0
-            ? `[${images.map(img =>
-                `{ id: "${img.id}", img: { src: "${img.img.src}", alt: "${sanitizeQuotesForMdx(img.img.alt || '')}" }, copyright: "${sanitizeQuotesForMdx(img.copyright || '')}", copyRightColor: "${img.copyRightColor || ''}" }`
-            ).join(', ')}]`
-            : '[]';
+        const objectsValue =
+            images.length > 0 ? serializeSwiperObjects(images) : "[]";
 
         return {
             objects: objectsValue

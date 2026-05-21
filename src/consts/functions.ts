@@ -16,6 +16,31 @@ export const sanitizeImgWithCopyRight = (
     : item.copyright,
 });
 
+export const serializeSwiperObjects = (arr: IImgWithCopyRight[]): string =>
+  JSON.stringify(arr.map(sanitizeImgWithCopyRight));
+
+export const parseSwiperObjects = (valueString: string): IImgWithCopyRight[] => {
+  try {
+    const parsed = JSON.parse(valueString);
+    if (Array.isArray(parsed)) {
+      return parsed.map(sanitizeImgWithCopyRight);
+    }
+    return [];
+  } catch {
+    const fixedJsonString = valueString
+      .replace(/"(\w+)":/g, '"$1":')
+      .replace(/([{,]\s*)(\w+):/g, '$1"$2":')
+      .replace(/"(https?):"/g, "$1:")
+      .replace(/:\s*"/g, ': "');
+
+    const parsed = JSON.parse(fixedJsonString);
+    if (Array.isArray(parsed)) {
+      return parsed.map(sanitizeImgWithCopyRight);
+    }
+    return [];
+  }
+};
+
 export function generateRandomId(length: number = 10): string {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
