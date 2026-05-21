@@ -103,6 +103,17 @@ export const EditorSwiper = ({ mdastNode }: EditorSwiperProps) => {
         [updateMdastNode, mapImgWithCRToMDastNode]
     );
 
+    const handleUpdate = useCallback(
+        (val: IImgWithCopyRight) => {
+            setObjects((prev) => {
+                const res = prev.map((item) => (item.id === val.id ? val : item));
+                updateMdastNode(mapImgWithCRToMDastNode(res));
+                return res;
+            });
+        },
+        [updateMdastNode, mapImgWithCRToMDastNode]
+    );
+
     const [editor] = useLexicalComposerContext();
 
     const handleDeleteSwiper = useCallback(
@@ -133,6 +144,7 @@ export const EditorSwiper = ({ mdastNode }: EditorSwiperProps) => {
             <ImgsSwiper
                 onAdd={handleAdd}
                 onDelete={handleDelete}
+                onUpdate={handleUpdate}
                 onReorder={handleReorder}
                 objects={objects}
             />

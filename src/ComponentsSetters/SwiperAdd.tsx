@@ -17,6 +17,10 @@ const SwiperAdd = ({ title }: { title: string }) => {
         setImages(prev => prev.filter(img => img.id !== imageToDelete.id));
     }, []);
 
+    const handleUpdateImage = useCallback((image: IImgWithCopyRight) => {
+        setImages(prev => prev.map(img => img.id === image.id ? image : img));
+    }, []);
+
     const handleReorderImages = useCallback((reorderedImages: IImgWithCopyRight[]) => {
         setImages(reorderedImages);
     }, []);
@@ -115,6 +119,7 @@ const SwiperAdd = ({ title }: { title: string }) => {
             <ImgsSwiper
                 onAdd={handleAddImage}
                 onDelete={handleDeleteImage}
+                onUpdate={handleUpdateImage}
                 onReorder={handleReorderImages}
                 objects={images}
                 dopSrc={dopSrcGlobal}

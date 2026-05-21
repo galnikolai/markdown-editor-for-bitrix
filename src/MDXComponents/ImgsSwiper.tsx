@@ -1,7 +1,7 @@
 'use client'
 
-import { useContext, useState, useEffect } from "react"; // Добавили useEffect в импорт
-import AddPhoto from "../HelpComponents/AddPhoto";
+import { useContext, useState, useEffect, useRef } from "react";
+import AddPhoto, { AddPhotoRef } from "../HelpComponents/AddPhoto";
 import { IImgWithCopyRight } from "./ImageWithCopyRight";
 import { DopImgSrcGlobalContext } from "../contexts/DopImgSrcProvider";
 import {
@@ -25,20 +25,21 @@ import { CSS } from '@dnd-kit/utilities';
 interface ISwiper {
     onAdd: (val: IImgWithCopyRight) => void,
     onDelete: (val: IImgWithCopyRight) => void,
+    onUpdate?: (val: IImgWithCopyRight) => void,
     onReorder?: (images: IImgWithCopyRight[]) => void,
     dopSrc?: string;
     objects?: IImgWithCopyRight[]
 }
 
-// Компонент сортируемого изображения
 function SortableImage({
-                           image,
-                           onDelete,
-                           dopSrcGlobal
-                       }: {
+    image,
+    onDelete,
+    onEdit,
+    dopSrcGlobal
+}: {
     image: IImgWithCopyRight,
     onDelete: (img: IImgWithCopyRight) => void,
-    dopSrc?: string,
+    onEdit: (img: IImgWithCopyRight) => void,
     dopSrcGlobal?: string
 }) {
     const {
@@ -65,13 +66,9 @@ function SortableImage({
             {...listeners}
             className="sortable-image"
         >
-            <div
-                style={{
-                    position: "relative",
-                }}
-            >
-                <div
-
+            <div style={{ position: "relative" }}>
+                <button
+                    type="button"
                     onClick={(e) => {
                         e.stopPropagation();
                         onDelete(image);
@@ -88,6 +85,9 @@ function SortableImage({
                         background: 'rgba(255, 255, 255, 0.9)',
                         border: '1px solid #ccc',
                         cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
                 >
                     <img
@@ -95,7 +95,30 @@ function SortableImage({
                         alt="Удалить"
                         style={{ width: '15px', height: '15px' }}
                     />
-                </div>
+                </button>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(image);
+                    }}
+                    style={{
+                        height: "30px",
+                        padding: "5px 10px",
+                        position: "absolute",
+                        left: "10px",
+                        top: "10px",
+                        borderRadius: "8px",
+                        zIndex: 1,
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        border: '1px solid #ccc',
+                        cursor: 'pointer',
+                        fontSize: "12px",
+                        whiteSpace: "nowrap",
+                    }}
+                >
+                    Редактировать
+                </button>
                 <img
                     src={image.img.src}
                     alt={image.img.alt ?? `картинка c id${image.id}`}
@@ -107,19 +130,22 @@ function SortableImage({
                         border: '2px solid transparent',
                     }}
                 />
-                {image.copyright && (
+                {image.copyright && image.copyright !== "undefined" && (
                     <div style={{
                         position: 'absolute',
                         bottom: '10px',
                         left: '10px',
                         right: '10px',
                         background: '#172c15',
-                        color: 'white',
+                        color: image.copyRightColor || '#ffffff',
                         padding: '4px 8px',
                         borderRadius: '4px',
                         fontSize: '12px',
+                        width: 'max-content',
+                        maxWidth: '70%',
                     }}>
-                        © {image.copyright}
+                        {image.copyright.startsWith("© ") ? "" : "© "}
+                        {image.copyright}
                     </div>
                 )}
             </div>
@@ -127,10 +153,18 @@ function SortableImage({
     );
 }
 
-export default function ImgsSwiper({ onAdd, onDelete, onReorder, dopSrc, objects = [] }: ISwiper) {
+export default function ImgsSwiper({
+    onAdd,
+    onDelete,
+    onUpdate,
+    onReorder,
+    objects = []
+}: ISwiper) {
     const [isVisibleEdit, setIsVisibleEdit] = useState<boolean>(false);
-    const { dopSrcGlobal } = useContext(DopImgSrcGlobalContext)
+    const [editingImage, setEditingImage] = useState<IImgWithCopyRight | null>(null);
+    const { dopSrcGlobal } = useContext(DopImgSrcGlobalContext);
     const [localObjects, setLocalObjects] = useState<IImgWithCopyRight[]>(objects);
+    const addPhotoRef = useRef<AddPhotoRef>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -149,52 +183,119 @@ export default function ImgsSwiper({ onAdd, onDelete, onReorder, dopSrc, objects
         if (over && active.id !== over.id) {
             const oldIndex = localObjects.findIndex((img) => img.id === active.id);
             const newIndex = localObjects.findIndex((img) => img.id === over.id);
-
             const newOrder = arrayMove(localObjects, oldIndex, newIndex);
 
-            // Обновляем локальное состояние
             setLocalObjects(newOrder);
 
-            // Если передан onReorder, вызываем его
-            if (onReorder && typeof onReorder === 'function') {
+            if (onReorder) {
                 onReorder(newOrder);
             }
         }
     };
 
     const changeVisibilityEdit = () => {
-        setIsVisibleEdit((prev) => !prev);
+        setIsVisibleEdit((prev) => {
+            if (prev) {
+                setEditingImage(null);
+            }
+            return !prev;
+        });
     };
 
-    // Обновляем локальное состояние при изменении props
-    useEffect(() => { // Заменили React.useEffect на useEffect
+    const handleEdit = (image: IImgWithCopyRight) => {
+        setEditingImage(image);
+        setIsVisibleEdit(true);
+
+        setTimeout(() => {
+            document.querySelector(".image-editor-section")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+            addPhotoRef.current?.setEditingData(image);
+        }, 100);
+    };
+
+    const handlePhotoSubmit = (photo: IImgWithCopyRight) => {
+        if (editingImage) {
+            setLocalObjects((prev) =>
+                prev.map((item) => (item.id === editingImage.id ? photo : item))
+            );
+            onUpdate?.(photo);
+            setEditingImage(null);
+            setIsVisibleEdit(false);
+        } else {
+            onAdd(photo);
+            setIsVisibleEdit(false);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingImage(null);
+    };
+
+    useEffect(() => {
         setLocalObjects(objects);
     }, [objects]);
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            <button
-                type="button"
-                style={{
-                    padding: "10px",
-                    borderRadius: "6px",
-                    width: "200px",
-                    background: "#4299e1",
-                    color: "white",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                }}
-                onClick={changeVisibilityEdit}
-            >
-                {isVisibleEdit ? "Скрыть редактор" : "Показать редактор"}
-            </button>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                    type="button"
+                    style={{
+                        padding: "10px 20px",
+                        borderRadius: "6px",
+                        background: isVisibleEdit ? "#e53e3e" : "#4299e1",
+                        color: "white",
+                        border: "none",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                        transition: "background-color 0.2s",
+                    }}
+                    onClick={changeVisibilityEdit}
+                >
+                    {isVisibleEdit ? "Скрыть редактор" : "Показать редактор"}
+                </button>
+
+                {editingImage && (
+                    <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        style={{
+                            padding: "10px 20px",
+                            borderRadius: "6px",
+                            background: "#805ad5",
+                            color: "white",
+                            border: "none",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        Отменить редактирование
+                    </button>
+                )}
+            </div>
 
             {isVisibleEdit && (
-                <AddPhoto
-                    updatePhoto={onAdd}
-                    //hasAnotherPhoto={localObjects.length > 0}
-                />
+                <div
+                    className="image-editor-section"
+                    style={{
+                        border: "2px solid #e2e8f0",
+                        borderRadius: "8px",
+                        padding: "20px",
+                        backgroundColor: "#f8fafc",
+                    }}
+                >
+                    <h3 style={{ marginTop: 0, marginBottom: "15px", color: "#2d3748" }}>
+                        {editingImage ? "Редактирование изображения" : "Добавление нового изображения"}
+                    </h3>
+                    <AddPhoto
+                        ref={addPhotoRef}
+                        updatePhoto={handlePhotoSubmit}
+                        editingImage={editingImage}
+                        onCancelEdit={handleCancelEdit}
+                    />
+                </div>
             )}
 
             <h4>Перетащите фото для изменения порядка (drag and drop):</h4>
@@ -223,7 +324,7 @@ export default function ImgsSwiper({ onAdd, onDelete, onReorder, dopSrc, objects
                                 key={photo.id}
                                 image={photo}
                                 onDelete={onDelete}
-                                dopSrc={dopSrc}
+                                onEdit={handleEdit}
                                 dopSrcGlobal={dopSrcGlobal}
                             />
                         ))}
