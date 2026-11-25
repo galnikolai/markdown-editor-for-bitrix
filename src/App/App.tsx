@@ -14,6 +14,7 @@ interface IApp {
 function App(props: IApp) {
   const { textareaName, content, imgSrc } = props;
   const [text, setText] = useState<string>(content);
+  const [saveStatus, setSaveStatus] = useState<string>("");
   const isInitialized = useRef(false);
 
   // Безопасная функция для вызова BX.fireEvent
@@ -143,6 +144,39 @@ function App(props: IApp) {
     };
   }, [textareaName, text, fireBitrixEvent]);
 
+  const handleSaveToHtml = useCallback(async () => {
+    if (!import.meta.env.DEV) {
+      return;
+    }
+
+    setSaveStatus("Сохранение...");
+
+    try {
+      const response = await fetch("/api/dev/save-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: text,
+          rootId: "root1",
+          textareaName,
+          imgSrc: imgSrc ?? "",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Не удалось сохранить index.html");
+      }
+
+      setSaveStatus("Сохранено в index.html");
+    } catch (error) {
+      setSaveStatus(
+        error instanceof Error ? error.message : "Ошибка сохранения"
+      );
+    }
+  }, [text, textareaName, imgSrc]);
+
 
 
   return (
@@ -166,6 +200,30 @@ function App(props: IApp) {
             <br />
             Вашу кастомную страницу:
           </h3>
+          {import.meta.env.DEV && (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <button
+                type="button"
+                onClick={handleSaveToHtml}
+                style={{
+                  padding: "8px 16px",
+                  background: "#4299e1",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                Сохранить в index.html
+              </button>
+              {saveStatus && (
+                <span style={{ fontSize: "14px", color: "#4a5568" }}>
+                  {saveStatus}
+                </span>
+              )}
+            </div>
+          )}
           <div className={styles.editor}>
             <MDXEditorWrapper
                 onChange={handleChange}

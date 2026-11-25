@@ -1,11 +1,17 @@
 'use client'
 
-import { useState, useCallback, useRef, DragEvent, ChangeEvent } from "react";
+import { useState, useCallback, useRef, DragEvent, ChangeEvent, forwardRef, useEffect, useImperativeHandle } from "react";
 import { IImgWithCopyRight } from "../MDXComponents/ImageWithCopyRight";
 import { sanitizeQuotesForMdx } from "../consts/functions";
 
+export interface AddPhotoRef {
+    setEditingData: (photo: IImgWithCopyRight) => void;
+}
+
 interface IAddPhoto {
     updatePhoto: (photo: IImgWithCopyRight) => void;
+    editingImage?: IImgWithCopyRight | null;
+    onCancelEdit?: () => void;
 }
 
 // Типы для ответа API
@@ -19,7 +25,10 @@ interface UploadResponse {
     type?: string;
 }
 */
-export default function AddPhoto({ updatePhoto }: IAddPhoto) {
+export default forwardRef<AddPhotoRef, IAddPhoto>(function AddPhoto(
+    { updatePhoto, editingImage, onCancelEdit },
+    ref
+) {
     const [imgSrc, setImgSrc] = useState<string>("");
     const [imgAlt, setImgAlt] = useState<string>("");
     const [copyright, setCopyright] = useState<string>("");
@@ -32,6 +41,24 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
     const [uploadError, setUploadError] = useState<string>("");
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const fillEditingData = useCallback((photo: IImgWithCopyRight) => {
+        setImgSrc(photo.img.src);
+        setImgAlt(photo.img.alt || "");
+        setCopyright(photo.copyright || "");
+        setCopyRightColor(photo.copyRightColor || "#ffffff");
+        setUploadError("");
+
+        if (photo.img.src) {
+            setPreviewUrl(photo.img.src);
+            setUploadedFile(new File([], "existing_image", { type: "image/jpeg" }));
+        }
+    }, []);
+
+    useImperativeHandle(ref, () => ({
+        setEditingData: fillEditingData,
+    }));
+
 // Функция для получения полного URL с доменом
     const getFullImageUrl = useCallback((relativeUrl: string): string => {
         // Если уже полный URL (начинается с http://, https://, data: или //)
@@ -201,12 +228,12 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!imgSrc.trim() && !uploadedFile) {
+        if (!imgSrc.trim() && !uploadedFile && !editingImage) {
             setUploadError("Выберите файл или введите ссылку на изображение");
             return;
         }
 
-        if (!imgSrc.trim()) {
+        if (!imgSrc.trim() && !editingImage) {
             setUploadError("Сначала загрузите изображение");
             return;
         }
@@ -215,7 +242,7 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
             imgAlt.trim() || `Изображение ${new Date().toLocaleDateString()}`
         );
         const newPhoto: IImgWithCopyRight = {
-            id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: editingImage?.id ?? `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             img: {
                 src: imgSrc,
                 alt: altValue,
@@ -228,8 +255,9 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
 
         updatePhoto(newPhoto);
 
-        // Сброс формы
-        clearForm();
+        if (!editingImage) {
+            clearForm();
+        }
     };
 
     const handleRemoveFile = () => {
@@ -267,6 +295,20 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
         }
     };
 
+    useEffect(() => {
+        if (editingImage) {
+            fillEditingData(editingImage);
+        } else {
+            clearForm();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editingImage]);
+
+    const handleCancelEdit = () => {
+        clearForm();
+        onCancelEdit?.();
+    };
+
     // Функция для получения контрастного цвета текста
     const getContrastColor = (hexColor: string): string => {
         if (!hexColor || hexColor.length < 7) return "#000000";
@@ -288,10 +330,28 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                {editingImage && (
+                    <div style={{
+                        padding: "10px 15px",
+                        background: "#e6fffa",
+                        border: "1px solid #81e6d9",
+                        borderRadius: "6px",
+                        marginBottom: "10px",
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <span style={{ fontSize: "18px" }}>✏️</span>
+                            <span style={{ color: "#234e52", fontWeight: "500" }}>
+                                Редактируете изображение: {editingImage.img.alt || `ID: ${editingImage.id}`}
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Блок загрузки файла */}
                 <div>
-                    <h4 style={{ marginBottom: "10px" }}>Загрузите изображение с компьютера:</h4>
+                    <h4 style={{ marginBottom: "10px" }}>
+                        {editingImage ? "Изменить изображение:" : "Загрузите изображение с компьютера:"}
+                    </h4>
 
                     {/* Область перетаскивания */}
                     <div
@@ -614,17 +674,17 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
                 <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                     <button
                         type="submit"
-                        disabled={isUploading || (!imgSrc.trim() && !uploadedFile)}
+                        disabled={isUploading || (!imgSrc.trim() && !uploadedFile && !editingImage)}
                         style={{
                             flex: 1,
                             padding: "12px 24px",
-                            background: isUploading || (!imgSrc.trim() && !uploadedFile)
+                            background: isUploading || (!imgSrc.trim() && !uploadedFile && !editingImage)
                                 ? "#cbd5e0"
-                                : "#4299e1",
+                                : editingImage ? "#38a169" : "#4299e1",
                             color: "white",
                             border: "none",
                             borderRadius: "6px",
-                            cursor: isUploading || (!imgSrc.trim() && !uploadedFile)
+                            cursor: isUploading || (!imgSrc.trim() && !uploadedFile && !editingImage)
                                 ? "not-allowed"
                                 : "pointer",
                             fontWeight: "600",
@@ -632,29 +692,68 @@ export default function AddPhoto({ updatePhoto }: IAddPhoto) {
                             transition: "background-color 0.2s"
                         }}
                     >
-                        {isUploading ? "Загрузка..." : "Добавить фото"}
+                        {isUploading ? "Загрузка..." : editingImage ? "Сохранить изменения" : "Добавить фото"}
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={clearForm}
-                        disabled={isUploading}
-                        style={{
-                            padding: "12px 24px",
-                            background: "#e2e8f0",
-                            color: "#4a5568",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: isUploading ? "not-allowed" : "pointer",
-                            fontWeight: "500",
-                            fontSize: "16px",
-                            transition: "background-color 0.2s"
-                        }}
-                    >
-                        Очистить
-                    </button>
+                    {editingImage ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                disabled={isUploading}
+                                style={{
+                                    padding: "12px 24px",
+                                    background: "#e2e8f0",
+                                    color: "#4a5568",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    cursor: isUploading ? "not-allowed" : "pointer",
+                                    fontWeight: "500",
+                                    fontSize: "16px",
+                                }}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                type="button"
+                                onClick={clearForm}
+                                disabled={isUploading}
+                                style={{
+                                    padding: "12px 24px",
+                                    background: "#fed7d7",
+                                    color: "#c53030",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    cursor: isUploading ? "not-allowed" : "pointer",
+                                    fontWeight: "500",
+                                    fontSize: "16px",
+                                }}
+                            >
+                                Очистить
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={clearForm}
+                            disabled={isUploading}
+                            style={{
+                                padding: "12px 24px",
+                                background: "#e2e8f0",
+                                color: "#4a5568",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: isUploading ? "not-allowed" : "pointer",
+                                fontWeight: "500",
+                                fontSize: "16px",
+                                transition: "background-color 0.2s"
+                            }}
+                        >
+                            Очистить
+                        </button>
+                    )}
                 </div>
             </form>
         </div>
     );
-}
+});
